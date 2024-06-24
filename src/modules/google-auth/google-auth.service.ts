@@ -52,6 +52,12 @@ export class GoogleAuthService {
         { secret, expiresIn },
       );
 
+      res.cookie('access_token', accessToken, {
+        maxAge: COOKIES_AGE,
+        sameSite: true,
+        secure: false, // Set to true if using HTTPS in production
+      });
+
       return { accessToken, authAction };
     }
 

@@ -27,6 +27,7 @@ export class UserService {
     await this.isUserExist(id);
 
     const user = await this.userRepository.getFullInfo(id);
+
     user.rate_targets.map((entity) => (sumRate = sumRate + entity.rate));
 
     user.avgRate = sumRate / user.rate_targets.length;

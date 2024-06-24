@@ -43,6 +43,13 @@ export class UserController {
     private readonly followService: FollowService,
   ) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get('user')
+  async getMe(@Req() { user }) {
+    console.log(user);
+    return await this.userService.getFullInfo(user.userId);
+  }
+
   @Get(ERouteName.GET_USER)
   async getUser(@Param('id', ParseUUIDPipe) id: string): Promise<UserEntity> {
     return await this.userService.getFullInfo(id);

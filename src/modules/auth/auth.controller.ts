@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import {
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -6,9 +6,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 
 import { ERouteName } from 'src/common/enums/route-name.enum';
-import { UserEntity } from 'src/entities/user.entity';
 import { SendOtpRequestDto } from 'src/modules/auth/dto/send-otp.request.dto';
 import {
   AccesResponseDto,
@@ -34,8 +34,13 @@ export class AuthController {
     description: 'The user has been successfully registered',
   })
   @Post(ERouteName.SIGNUP_ROUTE)
-  public async signUp(@Body() dto: SignUpRequestDto): Promise<UserEntity> {
-    return await this.authService.signUp(dto);
+  public async signUp(
+    @Body() dto: SignUpRequestDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const userInfo = await this.authService.signUp(dto);
+    response.cookie('access_token', userInfo.access_token);
+    return userInfo;
   }
 
   @UseGuards(LocalAuthGuard)
@@ -49,13 +54,20 @@ export class AuthController {
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
   })
-  async login(@Req() { user }: AuthReqDto): Promise<AccesResponseDto> {
-    return this.authService.login(
+  async login(
+    @Req() { user }: AuthReqDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AccesResponseDto> {
+    const userInfo = await this.authService.login(
       user.email,
       user.id,
       user.is_verified,
       user.filled_profile_step,
     );
+
+    response.cookie('access_token', userInfo.access_token);
+
+    return userInfo;
   }
 
   @Post(ERouteName.SEND_OTP)

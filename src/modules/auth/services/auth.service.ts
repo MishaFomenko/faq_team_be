@@ -9,9 +9,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Response } from 'express';
 import * as randomize from 'randomatic';
 
-import { UserEntity } from 'src/entities/user.entity';
 import { AccesResponseDto } from 'src/modules/auth/dto/sign-in.response.dto';
 import { SignUpRequestDto } from 'src/modules/auth/dto/sign-up.request.dto';
 import { UserDto } from 'src/modules/auth/dto/user.response.dto';
@@ -26,8 +26,11 @@ import {
 } from 'src/utils/constants/errorTexts';
 import { otpGeneratorParams } from 'src/utils/generalConstants';
 
+import { SignUpResponseDto } from '../dto/sign-up.response.dto';
+
 @Injectable()
 export class AuthService {
+  res: Response;
   constructor(
     private readonly userRepository: UserRepository,
     private readonly userService: UserService,
@@ -36,7 +39,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  public async signUp(dto: SignUpRequestDto): Promise<UserEntity> {
+  public async signUp(dto: SignUpRequestDto): Promise<SignUpResponseDto> {
     await this.userService.isEmailUnique(dto.email);
 
     const salt = +this.configService.get<string>('SALT');
@@ -72,7 +75,18 @@ export class AuthService {
       select: { id: true },
     });
 
-    return userId;
+    const access_token = this.jwtService.sign({
+      id: userId.id,
+      email: dto.email,
+    });
+
+    if (!access_token) {
+      throw new InternalServerErrorException(
+        AuthServiceErrors.errors.ACCESS_TOKEN,
+      );
+    }
+
+    return { id: userId.id, access_token };
   }
 
   async validateUser(email: string, password: string): Promise<UserDto> {

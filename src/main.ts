@@ -9,7 +9,12 @@ import { HttpExceptionFilter } from 'src/common/filters/httpException.filter';
 import { swgBuilderLabels } from 'src/utils/generalConstants';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: ['http://localhost:5173'],
+    methods: ['POST', 'GET', 'DELETE', 'PATCH'],
+    credentials: true,
+  });
   const configService = app.get(ConfigService);
 
   app.useGlobalFilters(new HttpExceptionFilter());
