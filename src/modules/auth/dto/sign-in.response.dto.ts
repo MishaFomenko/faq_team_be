@@ -17,4 +17,10 @@ export class AccesResponseDto {
 
   @ApiProperty()
   is_verified: boolean;
+
+  @ApiProperty()
+  filled_profile_step: number;
+
+  @ApiProperty()
+  id: string;
 }

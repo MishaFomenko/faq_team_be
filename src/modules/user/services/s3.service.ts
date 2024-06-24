@@ -15,7 +15,7 @@ export class S3Service {
   };
 
   constructor(private readonly configService: ConfigService) {
-    const awsConfig = {
+    this.awsConfig = {
       accessKey: this.configService.get<string>('AWS_ACCESS_KEY'),
       secretKey: this.configService.get<string>('AWS_SECRET_KEY'),
       bucket: this.configService.get<string>('AWS_S3_BUCKET_NAME'),
@@ -23,10 +23,10 @@ export class S3Service {
     };
 
     const params: S3ClientConfig = {
-      region: awsConfig.region,
+      region: this.awsConfig.region,
       credentials: {
-        accessKeyId: awsConfig.accessKey,
-        secretAccessKey: awsConfig.secretKey,
+        accessKeyId: this.awsConfig.accessKey,
+        secretAccessKey: this.awsConfig.secretKey,
       },
     };
 

@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 
 import { ERouteName } from 'src/common/enums/route-name.enum';
+import { UserEntity } from 'src/entities/user.entity';
 import { SendOtpRequestDto } from 'src/modules/auth/dto/send-otp.request.dto';
 import {
   AccesResponseDto,
@@ -33,7 +34,7 @@ export class AuthController {
     description: 'The user has been successfully registered',
   })
   @Post(ERouteName.SIGNUP_ROUTE)
-  public async signUp(@Body() dto: SignUpRequestDto): Promise<void> {
+  public async signUp(@Body() dto: SignUpRequestDto): Promise<UserEntity> {
     return await this.authService.signUp(dto);
   }
 
@@ -49,7 +50,12 @@ export class AuthController {
     description: 'Internal server error',
   })
   async login(@Req() { user }: AuthReqDto): Promise<AccesResponseDto> {
-    return this.authService.login(user.email, user.id, user.is_verified);
+    return this.authService.login(
+      user.email,
+      user.id,
+      user.is_verified,
+      user.filled_profile_step,
+    );
   }
 
   @Post(ERouteName.SEND_OTP)

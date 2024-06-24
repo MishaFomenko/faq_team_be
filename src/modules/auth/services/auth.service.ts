@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as randomize from 'randomatic';
 
+import { UserEntity } from 'src/entities/user.entity';
 import { AccesResponseDto } from 'src/modules/auth/dto/sign-in.response.dto';
 import { SignUpRequestDto } from 'src/modules/auth/dto/sign-up.request.dto';
 import { UserDto } from 'src/modules/auth/dto/user.response.dto';
@@ -35,7 +36,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  public async signUp(dto: SignUpRequestDto): Promise<void> {
+  public async signUp(dto: SignUpRequestDto): Promise<UserEntity> {
     await this.userService.isEmailUnique(dto.email);
 
     const salt = +this.configService.get<string>('SALT');
@@ -65,12 +66,25 @@ export class AuthService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     });
+
+    const userId = await this.userRepository.findOne({
+      where: { email: dto.email },
+      select: { id: true },
+    });
+
+    return userId;
   }
 
   async validateUser(email: string, password: string): Promise<UserDto> {
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { password: true, is_verified: true, email: true, id: true },
+      select: {
+        password: true,
+        is_verified: true,
+        email: true,
+        id: true,
+        filled_profile_step: true,
+      },
     });
 
     if (!user) {
@@ -90,6 +104,7 @@ export class AuthService {
     email: string,
     id: string,
     is_verified: boolean,
+    filled_profile_step: number,
   ): Promise<AccesResponseDto> {
     const payload = { email, id };
     const newAccessToken = this.jwtService.sign(payload);
@@ -101,8 +116,10 @@ export class AuthService {
     }
 
     return {
+      id,
       access_token: newAccessToken,
       is_verified,
+      filled_profile_step,
     };
   }
 }

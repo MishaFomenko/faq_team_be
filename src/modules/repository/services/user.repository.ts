@@ -68,6 +68,15 @@ export class UserRepository extends Repository<UserEntity> {
       });
 
     if (role) {
+      if (role === EUserRole.VENDOR) {
+        queryBuilder
+          .leftJoinAndSelect(
+            'user.products',
+            'products',
+            'user.id = products.vendor_id',
+          )
+          .orderBy('avgRate', order);
+      }
       queryBuilder.andWhere('user.user_role = :role', { role });
     }
 
@@ -87,6 +96,12 @@ export class UserRepository extends Repository<UserEntity> {
       .take(limit);
 
     const [users, totalCount] = await queryBuilder.getManyAndCount();
+
+    users.forEach((user) => {
+      if (user.products.length > 10) {
+        user.products = user.products.slice(0, 10);
+      }
+    });
 
     return { totalCount, users };
   }
