@@ -67,7 +67,7 @@ export class ProductRepository extends Repository<ProductEntity> {
       .addSelect(['owner.full_name', 'owner.id']);
 
     queryBuilder
-      .orderBy('product.product_name', order)
+      .orderBy('product.price', order)
       .skip(limit ? (page - 1) * limit : 0)
       .take(limit);
 
