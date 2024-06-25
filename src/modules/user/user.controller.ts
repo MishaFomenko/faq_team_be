@@ -92,7 +92,7 @@ export class UserController {
   @Delete(ERouteName.DELETE_USER)
   @HttpCode(HttpStatus.OK)
   async deleteBySuperAdmin(
-      @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
     return await this.userService.softDelete(id);
   }
@@ -101,9 +101,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Delete(ERouteName.DELETE_ME)
   @HttpCode(HttpStatus.OK)
-  async deleteMe(
-      @Req() {user},
-  ): Promise<void> {
+  async deleteMe(@Req() { user }): Promise<void> {
     return await this.userService.deleteMe(user.userId);
   }
 
