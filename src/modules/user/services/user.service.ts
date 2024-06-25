@@ -167,4 +167,9 @@ export class UserService {
     user.is_deleted_by_admin = true;
     await this.userRepository.save(user);
   }
+
+  public async deleteMe(id: string): Promise<void> {
+    await this.isUserExist(id);
+    await this.userRepository.delete(id);
+  }
 }

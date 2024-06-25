@@ -43,6 +43,7 @@ export class UserController {
     private readonly followService: FollowService,
   ) {}
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('user')
   async getMe(@Req() { user }) {
@@ -50,6 +51,8 @@ export class UserController {
     return await this.userService.getFullInfo(user.userId);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get(ERouteName.GET_USER)
   async getUser(@Param('id', ParseUUIDPipe) id: string): Promise<UserEntity> {
     return await this.userService.getFullInfo(id);
@@ -67,6 +70,8 @@ export class UserController {
     return { message: 'user updated successfully' };
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get(ERouteName.GET_USERS_ROUTE)
   @HttpCode(HttpStatus.OK)
   async getAll(
@@ -75,19 +80,31 @@ export class UserController {
     return await this.userService.getAllUsers(query);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post(ERouteName.RATE_USER)
+  async rateUser(@Req() { user }, @Body() dto: RateRequestDto): Promise<void> {
+    return await this.rateService.rateUser(user.userId, dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Delete(ERouteName.DELETE_USER)
   @HttpCode(HttpStatus.OK)
   async deleteBySuperAdmin(
-    @Param('id', ParseUUIDPipe) id: string,
+      @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
     return await this.userService.softDelete(id);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Post(ERouteName.RATE_USER)
-  async rateUser(@Req() { user }, @Body() dto: RateRequestDto): Promise<void> {
-    return await this.rateService.rateUser(user.userId, dto);
+  @Delete(ERouteName.DELETE_ME)
+  @HttpCode(HttpStatus.OK)
+  async deleteMe(
+      @Req() {user},
+  ): Promise<void> {
+    return await this.userService.deleteMe(user.userId);
   }
 
   @ApiBearerAuth()

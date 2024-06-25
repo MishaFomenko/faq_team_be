@@ -80,27 +80,27 @@ export class UserEntity extends BaseEntity {
   @Column({ nullable: true })
   payment_method_id: string;
 
-  @OneToMany(() => RateEntity, (entity) => entity.rates)
+  @OneToMany(() => RateEntity, (entity) => entity.rates, {cascade:true})
   rates?: RateEntity[];
 
-  @OneToMany(() => RateEntity, (entity) => entity.user_target)
+  @OneToMany(() => RateEntity, (entity) => entity.user_target, {cascade:true})
   rate_targets?: RateEntity[];
 
-  @OneToMany(() => ReviewEntity, (entity) => entity.review_target)
+  @OneToMany(() => ReviewEntity, (entity) => entity.review_target, {cascade:true})
   review_targets?: ReviewEntity[];
 
-  @OneToMany(() => ReviewEntity, (entity) => entity.author)
+  @OneToMany(() => ReviewEntity, (entity) => entity.author, {cascade:true})
   user_reviews?: ReviewEntity[];
 
-  @OneToMany(() => FollowEntity, (entity) => entity.follower)
+  @OneToMany(() => FollowEntity, (entity) => entity.follower, {cascade:true})
   followers?: FollowEntity[];
 
-  @OneToMany(() => FollowEntity, (entity) => entity.following)
+  @OneToMany(() => FollowEntity, (entity) => entity.following, {cascade:true})
   followings?: FollowEntity[];
 
-  @OneToMany(() => OrderEntity, (entity) => entity.buyer)
+  @OneToMany(() => OrderEntity, (entity) => entity.buyer, {cascade:true})
   orders?: OrderEntity[];
 
-  @OneToMany(() => ProductEntity, (entity) => entity.owner)
+  @OneToMany(() => ProductEntity, (entity) => entity.owner, {cascade:true})
   products?: ProductEntity[];
 }
