@@ -33,6 +33,8 @@ import { RateService } from 'src/modules/user/services/rate.service';
 import { ReviewService } from 'src/modules/user/services/review.service';
 import { UserService } from 'src/modules/user/services/user.service';
 
+import { CardInfoDto } from './dto/card-info.dto';
+
 @ApiTags('User')
 @Controller(ERouteName.USERS_ROUTE)
 export class UserController {
@@ -47,7 +49,6 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('user')
   async getMe(@Req() { user }) {
-    console.log(user);
     return await this.userService.getFullInfo(user.userId);
   }
 
@@ -185,5 +186,12 @@ export class UserController {
     { paymentMethod, id }: { paymentMethod: PaymentMethod; id: string },
   ): Promise<void> {
     return await this.userService.saveCardInfo({ id, paymentMethod });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get(ERouteName.GET_CARD_INFO)
+  async getCardInfo(@Req() { user }): Promise<CardInfoDto> {
+    return await this.userService.getCardInfo(user.userId);
   }
 }

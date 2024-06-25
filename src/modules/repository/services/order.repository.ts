@@ -56,7 +56,7 @@ export class OrderRepository extends Repository<OrderEntity> {
     const totalSalesAllTime = parseInt(resultAllTime.result) || 0;
 
     const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 20);
 
     const qbBeforeLastWeek = this.getQueryBuilder(userId, 'price', 'SUM', [
       'order.created_at <= :oneWeekAgo',
@@ -88,7 +88,7 @@ export class OrderRepository extends Repository<OrderEntity> {
     const totalOrdersAllTime = parseInt(resultAllTime.result) || 0;
 
     const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 20);
 
     const qbBeforeLastWeek = this.getQueryBuilder(userId, 'id', 'COUNT', [
       'order.created_at <= :oneWeekAgo',
@@ -120,7 +120,7 @@ export class OrderRepository extends Repository<OrderEntity> {
     const averageSalesAllTime = parseInt(resultAllTime.result) || 0;
 
     const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 20);
 
     const qbLastWeek = this.getQueryBuilder(userId, 'price', 'AVG', [
       'order.created_at >= :oneWeekAgo',
@@ -170,6 +170,9 @@ export class OrderRepository extends Repository<OrderEntity> {
   public async getTotalSalesForTopCategoriesForUser(
     userId: string,
   ): Promise<{ category: string; totalSales: number; orderCount: number }[]> {
+    const someDaysAgo = new Date();
+    someDaysAgo.setDate(someDaysAgo.getDate() - 20);
+
     const qb = this.createQueryBuilder('order');
     qb.innerJoin('order.product', 'product')
       .innerJoin('product.owner', 'user')
@@ -177,6 +180,8 @@ export class OrderRepository extends Repository<OrderEntity> {
       .addSelect('SUM(order.price)', 'totalSales')
       .addSelect('COUNT(order.id)', 'orderCount')
       .where('user.id = :userId', { userId })
+      .andWhere('order.created_at >= :someDaysAgo', { someDaysAgo })
+
       .groupBy('product.category')
       .orderBy('totalSales', 'DESC')
       .limit(4);
@@ -199,14 +204,14 @@ export class OrderRepository extends Repository<OrderEntity> {
   public async getOrdersForLastThreeDays(
     userId: string,
   ): Promise<OrderEntity[]> {
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const someDaysAgo = new Date();
+    someDaysAgo.setDate(someDaysAgo.getDate() - 20);
 
     const qb = this.createQueryBuilder('order');
     qb.innerJoin('order.product', 'product')
       .innerJoin('product.owner', 'user')
       .where('user.id = :userId', { userId })
-      .andWhere('order.created_at >= :threeDaysAgo', { threeDaysAgo })
+      .andWhere('order.created_at >= :someDaysAgo', { someDaysAgo })
       .select([
         'order.id',
         'order.price',
@@ -215,6 +220,7 @@ export class OrderRepository extends Repository<OrderEntity> {
       ]);
 
     const result = await qb.getRawMany();
+
     if (!result) {
       throw new HttpException(
         EErrorMessage.QUERY_FAILED,
