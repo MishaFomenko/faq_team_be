@@ -66,16 +66,20 @@ export class UserRepository extends Repository<UserEntity> {
       .andWhere('user.user_role != :superAdminRole', {
         superAdminRole: EUserRole.SUPERADMIN,
       });
-
-    if (role) {
+    if (role !== EUserRole.UNDEFINED) {
       if (role === EUserRole.VENDOR) {
+        queryBuilder.leftJoinAndSelect(
+          'user.products',
+          'products',
+          'user.id = products.vendor_id',
+        );
         queryBuilder
-          .leftJoinAndSelect(
-            'user.products',
-            'products',
-            'user.id = products.vendor_id',
+          .leftJoin(
+            'user.rate_targets',
+            'rate_targets',
+            'user.id = rate_targets.user_target',
           )
-          .orderBy('avgRate', order);
+          .addSelect(['rate_targets.rate']);
       }
       queryBuilder.andWhere('user.user_role = :role', { role });
     }
@@ -97,11 +101,21 @@ export class UserRepository extends Repository<UserEntity> {
 
     const [users, totalCount] = await queryBuilder.getManyAndCount();
 
-    users.forEach((user) => {
-      if (user.products.length > 10) {
-        user.products = user.products.slice(0, 10);
-      }
-    });
+    if (role === EUserRole.VENDOR) {
+      users.map((user) => {
+        let sumRate = 0;
+        user.rate_targets.map((entity) => (sumRate = entity.rate + sumRate));
+        user.avgRate = sumRate;
+      });
+
+      users.sort((a, b) => b.avgRate - a.avgRate);
+
+      users.forEach((user) => {
+        if (user.products.length > 10) {
+          user.products = user.products.slice(0, 10);
+        }
+      });
+    }
 
     return { totalCount, users };
   }

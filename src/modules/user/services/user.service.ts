@@ -8,6 +8,7 @@ import { EAwsBucketPath } from 'src/common/enums/aws-bucket-path.enum';
 import { EErrorMessage } from 'src/common/enums/error-message.enum';
 import { UserEntity } from 'src/entities/user.entity';
 import { UserRepository } from 'src/modules/repository/services/user.repository';
+import { CardInfoDto } from 'src/modules/user/dto/card-info.dto';
 import { UsersFilterDto } from 'src/modules/user/dto/filter-users.request.dto';
 import { UsersFilterResponseDto } from 'src/modules/user/dto/filter-users.response.dto';
 import { UpdateUserDto } from 'src/modules/user/dto/update-user.dto';
@@ -27,11 +28,34 @@ export class UserService {
     await this.isUserExist(id);
 
     const user = await this.userRepository.getFullInfo(id);
+
     user.rate_targets.map((entity) => (sumRate = sumRate + entity.rate));
 
     user.avgRate = sumRate / user.rate_targets.length;
 
     return user;
+  }
+
+  public async getCardInfo(id: string): Promise<CardInfoDto | null> {
+    const stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET'));
+
+    await this.isUserExist(id);
+
+    const user = await this.userRepository.getFullInfo(id);
+
+    const paymentMethod =
+      user &&
+      user.stripe_id &&
+      user.payment_method_id &&
+      (await stripe.customers.retrievePaymentMethod(
+        user.stripe_id,
+        user.payment_method_id,
+      ));
+
+    return {
+      cardBrand: paymentMethod?.card.display_brand,
+      lastFourDigits: paymentMethod?.card.last4,
+    };
   }
 
   public async isUserExist(userId: string): Promise<UserEntity> {
@@ -165,5 +189,10 @@ export class UserService {
     const user = await this.isUserExist(id);
     user.is_deleted_by_admin = true;
     await this.userRepository.save(user);
+  }
+
+  public async deleteMe(id: string): Promise<void> {
+    await this.isUserExist(id);
+    await this.userRepository.delete(id);
   }
 }

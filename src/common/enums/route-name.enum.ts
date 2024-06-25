@@ -10,6 +10,7 @@ export enum ERouteName {
   DELETE_REVIEW = '/user/review/:id',
   USER_UPDATEBYID_ROUTE = 'update/:id',
   DELETE_USER = 'user-delete/:id',
+  DELETE_ME = 'user/delete',
   GET_USERS_ROUTE = 'get-all',
   SEND_OTP = 'send-otp',
   VERIFY_OTP = 'verify-otp',
@@ -23,6 +24,8 @@ export enum ERouteName {
   SAVE_ADDRESS = 'save-address',
   SAVE_CARD_INFO = 'save-card-info',
   SAVE_SIZES = 'save-sizes',
+
+  GET_CARD_INFO = 'get-card-info',
 
   ORDERS_ROUTE = 'orders',
   PRODUCTS_ROUTE = 'products',

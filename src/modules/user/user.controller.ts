@@ -14,26 +14,28 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { PaymentMethod } from '@stripe/stripe-js';
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { PaymentMethod } from "@stripe/stripe-js";
 
-import { ERouteName } from 'src/common/enums/route-name.enum';
-import { ReviewEntity } from 'src/entities/review.entity';
-import { UserEntity } from 'src/entities/user.entity';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwtAuthGuard';
-import { UsersFilterDto } from 'src/modules/user/dto/filter-users.request.dto';
-import { UsersFilterResponseDto } from 'src/modules/user/dto/filter-users.response.dto';
-import { MakeReviewRequestDto } from 'src/modules/user/dto/make-review.request.dto';
-import { RateRequestDto } from 'src/modules/user/dto/rate-request.dto';
-import { UpdateUserDto } from 'src/modules/user/dto/update-user.dto';
-import { FollowService } from 'src/modules/user/services/follow.service';
-import { RateService } from 'src/modules/user/services/rate.service';
-import { ReviewService } from 'src/modules/user/services/review.service';
-import { UserService } from 'src/modules/user/services/user.service';
+import { ERouteName } from "src/common/enums/route-name.enum";
+import { ReviewEntity } from "src/entities/review.entity";
+import { UserEntity } from "src/entities/user.entity";
+import { JwtAuthGuard } from "src/modules/auth/guards/jwtAuthGuard";
+import { UsersFilterDto } from "src/modules/user/dto/filter-users.request.dto";
+import { UsersFilterResponseDto } from "src/modules/user/dto/filter-users.response.dto";
+import { MakeReviewRequestDto } from "src/modules/user/dto/make-review.request.dto";
+import { RateRequestDto } from "src/modules/user/dto/rate-request.dto";
+import { UpdateUserDto } from "src/modules/user/dto/update-user.dto";
+import { FollowService } from "src/modules/user/services/follow.service";
+import { RateService } from "src/modules/user/services/rate.service";
+import { ReviewService } from "src/modules/user/services/review.service";
+import { UserService } from "src/modules/user/services/user.service";
 
-@ApiTags('User')
+import { CardInfoDto } from "./dto/card-info.dto";
+
+@ApiTags("User")
 @Controller(ERouteName.USERS_ROUTE)
 export class UserController {
   constructor(
@@ -43,8 +45,17 @@ export class UserController {
     private readonly followService: FollowService,
   ) {}
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get("user")
+  async getMe(@Req() { user }) {
+    return await this.userService.getFullInfo(user.userId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get(ERouteName.GET_USER)
-  async getUser(@Param('id', ParseUUIDPipe) id: string): Promise<UserEntity> {
+  async getUser(@Param("id", ParseUUIDPipe) id: string): Promise<UserEntity> {
     return await this.userService.getFullInfo(id);
   }
 
@@ -53,13 +64,15 @@ export class UserController {
   @Patch(ERouteName.USER_UPDATEBYID_ROUTE)
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<{ message: string }> {
     await this.userService.updateUser(updateUserDto, id);
-    return { message: 'user updated successfully' };
+    return { message: "user updated successfully" };
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get(ERouteName.GET_USERS_ROUTE)
   @HttpCode(HttpStatus.OK)
   async getAll(
@@ -68,19 +81,29 @@ export class UserController {
     return await this.userService.getAllUsers(query);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post(ERouteName.RATE_USER)
+  async rateUser(@Req() { user }, @Body() dto: RateRequestDto): Promise<void> {
+    return await this.rateService.rateUser(user.userId, dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Delete(ERouteName.DELETE_USER)
   @HttpCode(HttpStatus.OK)
   async deleteBySuperAdmin(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
   ): Promise<void> {
     return await this.userService.softDelete(id);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Post(ERouteName.RATE_USER)
-  async rateUser(@Req() { user }, @Body() dto: RateRequestDto): Promise<void> {
-    return await this.rateService.rateUser(user.userId, dto);
+  @Delete(ERouteName.DELETE_ME)
+  @HttpCode(HttpStatus.OK)
+  async deleteMe(@Req() { user }): Promise<void> {
+    return await this.userService.deleteMe(user.userId);
   }
 
   @ApiBearerAuth()
@@ -103,7 +126,7 @@ export class UserController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(ERouteName.DELETE_REVIEW)
-  async deleteReview(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async deleteReview(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
     return await this.reviewService.deleteReview(id);
   }
 
@@ -113,7 +136,7 @@ export class UserController {
   @Post(ERouteName.FOLLOW)
   public async follow(
     @Req() { user },
-    @Param('id', ParseUUIDPipe) follow_target_id: string,
+    @Param("id", ParseUUIDPipe) follow_target_id: string,
   ): Promise<void> {
     await this.followService.follow(user.userId, follow_target_id);
   }
@@ -124,7 +147,7 @@ export class UserController {
   @Delete(ERouteName.UNFOLLOW)
   public async unfollow(
     @Req() { user },
-    @Param('id', ParseUUIDPipe) unfollow_target_id: string,
+    @Param("id", ParseUUIDPipe) unfollow_target_id: string,
   ): Promise<void> {
     await this.followService.unfollow(user.userId, unfollow_target_id);
   }
@@ -134,7 +157,7 @@ export class UserController {
   @Get(ERouteName.ISFOLLOWING)
   public async isFollowing(
     @Req() { user },
-    @Param('id', ParseUUIDPipe) unfollow_target_id: string,
+    @Param("id", ParseUUIDPipe) unfollow_target_id: string,
   ): Promise<boolean> {
     return await this.followService.isFollowing(
       user.userId,
@@ -146,11 +169,11 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Post(ERouteName.SAVE_GENERAL_INFO)
   @HttpCode(HttpStatus.OK)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor("file"))
   async saveGeneralInfo(
     @UploadedFile() file: Express.Multer.File,
-    @Body('phone') phone: string,
-    @Body('id') id: string,
+    @Body("phone") phone: string,
+    @Body("id") id: string,
   ) {
     return await this.userService.saveGeneralInfo({ file, phone, id });
   }
@@ -163,5 +186,12 @@ export class UserController {
     { paymentMethod, id }: { paymentMethod: PaymentMethod; id: string },
   ): Promise<void> {
     return await this.userService.saveCardInfo({ id, paymentMethod });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get(ERouteName.GET_CARD_INFO)
+  async getCardInfo(@Req() { user }): Promise<CardInfoDto> {
+    return await this.userService.getCardInfo(user.userId);
   }
 }
